@@ -1,0 +1,13 @@
+target/
+project/target/
+project/project/
+.idea/
+*.iml
+.DS_Store
+
+*.iws
+*.ipr
+*.bak
+*.swp
+
+*.log
