@@ -31,7 +31,7 @@ object Monitor {
       case _   => println("Invalid selection. Returning to menu."); return
     }
 
-    val records = CsvStorage.readRecords(s"$label-$dateTag.csv")
+    val records = CsvStorage.readRecords(s"data/$label-$dateTag.csv")
     if (records.isEmpty) {
       println("No records found for this dataset.")
       return

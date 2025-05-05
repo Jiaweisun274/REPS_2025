@@ -9,7 +9,7 @@ import java.time.temporal.{ChronoUnit, WeekFields}
 import java.time.{ZonedDateTime, LocalDate}
 
 object DataAnalyzer {
-  
+
   // Group records by selected granularity
   def groupByGranularity(records: Seq[Record], granularity: String): Map[String, Seq[Record]] = {
     import java.time.format.DateTimeFormatter
@@ -36,7 +36,7 @@ object DataAnalyzer {
     }
     records.groupBy(formatter)
   }
-  
+
   // CLI flow for analyzing selected dataset
   def analyzeWithUserInput(dateTag: String, from: ZonedDateTime, to: ZonedDateTime): Unit = {
     println(s"\n--- Data Analysis for $dateTag ---")
@@ -56,7 +56,7 @@ object DataAnalyzer {
       case _   => println("Invalid selection. Defaulting to 'solar'."); "solar"
     }
 
-    val records = CsvStorage.readRecords(s"$source-$dateTag.csv")
+    val records = CsvStorage.readRecords(s"data/$source-$dateTag.csv")
     if (records.isEmpty) {
       println("No records found for this dataset.")
       return
@@ -83,7 +83,7 @@ object DataAnalyzer {
         case _ => println("Invalid input, try again.")
       }
     }
-    
+
     val totalsPerGroup = DataAnalyzer.groupByGranularity(records, granularity)
       .mapValues(_.map(_.outputKWh).sum)
       .values
