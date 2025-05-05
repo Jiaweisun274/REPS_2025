@@ -1,13 +1,23 @@
 target/
 project/target/
 project/project/
+lib_managed/
+src_managed/
+bin/
+.metals/
+.bloop/
+.ammonite/
+.worksheet/
+coursier-cache/
+.scala-build/
+
 .idea/
 *.iml
-.DS_Store
 
-*.iws
-*.ipr
-*.bak
-*.swp
+.DS_Store
+Thumbs.db
 
 *.log
+*.bak
+*.swp
+*.tmp

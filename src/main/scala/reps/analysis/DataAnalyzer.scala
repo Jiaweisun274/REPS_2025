@@ -1,5 +1,7 @@
 package reps.analysis
 
+// DataAnalyzer provides grouping and statistical methods for records
+
 import reps.storage.CsvStorage
 import reps.models.Record
 import scala.io.StdIn
@@ -8,6 +10,7 @@ import java.time.{ZonedDateTime, LocalDate}
 
 object DataAnalyzer {
   
+  // Group records by selected granularity
   def groupByGranularity(records: Seq[Record], granularity: String): Map[String, Seq[Record]] = {
     import java.time.format.DateTimeFormatter
     import java.time.temporal.WeekFields
@@ -34,9 +37,11 @@ object DataAnalyzer {
     records.groupBy(formatter)
   }
   
+  // CLI flow for analyzing selected dataset
   def analyzeWithUserInput(dateTag: String, from: ZonedDateTime, to: ZonedDateTime): Unit = {
     println(s"\n--- Data Analysis for $dateTag ---")
 
+    // Select source
     println("Select data source:")
     println(" 1) Solar")
     println(" 2) Wind")
@@ -62,6 +67,7 @@ object DataAnalyzer {
     var valid = false
 
     while (!valid) {
+      // Select granularity
       println("Choose time granularity:")
       println(" 1) Hourly\n 2) Daily\n 3) Weekly\n 4) Monthly")
       print("Select> ")
@@ -77,8 +83,7 @@ object DataAnalyzer {
         case _ => println("Invalid input, try again.")
       }
     }
-
-    // Use DataAnalyzer.groupByGranularity and compute totals per group
+    
     val totalsPerGroup = DataAnalyzer.groupByGranularity(records, granularity)
       .mapValues(_.map(_.outputKWh).sum)
       .values
@@ -105,8 +110,10 @@ object DataAnalyzer {
     StdIn.readLine()
   }
 
+  // Compute mean
   def mean(data: Seq[Double]): Double = if (data.isEmpty) 0.0 else data.sum / data.size
 
+  // Compute median
   def median(data: Seq[Double]): Double = {
     val sorted = data.sorted
     val size = sorted.size
@@ -115,6 +122,7 @@ object DataAnalyzer {
     else (sorted(size / 2 - 1) + sorted(size / 2)) / 2
   }
 
+  // Compute mode
   def mode(data: Seq[Double]): Seq[Double] = {
     if (data.isEmpty) return Seq.empty
     val grouped = data.groupBy(identity).view.mapValues(_.size)
@@ -122,7 +130,9 @@ object DataAnalyzer {
     grouped.filter(_._2 == maxFreq).keys.toSeq.sorted
   }
 
+  // Compute range
   def range(data: Seq[Double]): Double = if (data.isEmpty) 0.0 else data.max - data.min
 
+  // Compute midrange
   def midrange(data: Seq[Double]): Double = if (data.isEmpty) 0.0 else (data.max + data.min) / 2
 }

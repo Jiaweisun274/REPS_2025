@@ -10,13 +10,20 @@ import sttp.model.StatusCode
 import io.circe.generic.auto._
 import reps.ui.CsvWrapper
 
+// Downloads and saves Fingrid data
 object Downloader {
   private val isoFmt = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   private val dateFmt = DateTimeFormatter.ISO_DATE
   private val backend = HttpURLConnectionBackend()
-  private val apiKey = "ab159c9a089a4a43882b487f0c2d0390"
+  private var apiKey: String = ""
+
+  // Set API key
+  def setApiKey(key: String): Unit = {
+    apiKey = key
+  }
   private val maxAtt = 5
 
+  // Ask user for time range
   def promptDownloadRange(): (ZonedDateTime, ZonedDateTime, String) = {
     println("=== REP System Data Downloader ===")
     println("Select download mode:")
@@ -30,6 +37,7 @@ object Downloader {
     while (!valid) {
       print("Choice> ")
       mode = scala.io.StdIn.readLine().trim
+      // Validate input
       if (validModes.contains(mode)) valid = true
       else println("[Error] Invalid input. Please enter 1, 2, or 3.")
     }
@@ -59,6 +67,7 @@ object Downloader {
     (from, to, dateTag)
   }
 
+  // Read and parse date
   private def promptForDate(prompt: String): LocalDate = {
     var parsed = false
     var date: LocalDate = null
@@ -75,6 +84,7 @@ object Downloader {
     date
   }
 
+  // Fetch and write data
   def downloadForDate(
                        datasetId: Int,
                        label: String,
@@ -83,6 +93,11 @@ object Downloader {
                        dateTag: String,
                        dirPath: String
                      ): Unit = {
+    // Abort if key missing
+    if (apiKey.isEmpty) {
+      println("[Error] API key not set. Please set the API key before downloading.")
+      return
+    }
     val isoFrom = isoFmt.format(from)
     val isoTo   = isoFmt.format(to)
 
@@ -92,6 +107,7 @@ object Downloader {
     var moreData = true
 
     while (moreData && attempts < maxAtt) {
+      // Fetch paginated data
       val pagedUri = uri"https://data.fingrid.fi/api/datasets/$datasetId/data"
         .addParam("startTime", isoFrom)
         .addParam("endTime", isoTo)
@@ -111,6 +127,7 @@ object Downloader {
       } else {
         attempts += 1
         response.body match {
+          // Append page data
           case Right(wrapper) =>
             val lines = wrapper.data.linesIterator.toList
             if (lines.size <= 1) moreData = false
@@ -148,6 +165,7 @@ object Downloader {
       if (hourlyLines.isEmpty) {
         println(s"[Info] Skipped $label-$dateTag.csv (no hourly data found)")
       } else {
+        // Save file
         val filename = s"$label-$dateTag.csv"
         val outputPath = Paths.get(dirPath, filename)
         Files.write(outputPath, (header +: hourlyLines).mkString("\n").getBytes("UTF-8"))

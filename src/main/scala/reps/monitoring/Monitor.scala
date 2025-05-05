@@ -1,13 +1,17 @@
 package reps.monitoring
 
+// Monitor detects low output and drop alerts
+
 import reps.models.Record
 import reps.storage.CsvStorage
 
 object Monitor {
 
+  // Alert types
   case class LowOutputAlert(record: Record, threshold: Double)
   case class SuddenDropAlert(prev: Record, current: Record, dropPercent: Double)
 
+  // CLI menu for alerts
   def runMonitoringMenu(dateTag: String): Unit = {
     println("\n--- Monitoring and Alerts ---")
     println("Select data source to monitor:")
@@ -49,22 +53,26 @@ object Monitor {
     scala.io.StdIn.readLine()
   }
 
+  // Prompt threshold and check low output
   def runLowOutputCheck(records: Seq[Record]): Unit = {
     print("Enter output threshold (e.g., 1000 kWh): ")
     val threshold = scala.io.StdIn.readLine().trim.toDoubleOption.getOrElse(10.0)
     showLowOutputAlerts(records, threshold)
   }
 
+  // Prompt threshold and check sudden drops
   def runSuddenDropCheck(records: Seq[Record]): Unit = {
     print("Enter sudden drop threshold percentage (e.g., 20): ")
     val threshold = scala.io.StdIn.readLine().trim.toDoubleOption.getOrElse(80.0)
     showSuddenDropAlerts(records, threshold)
   }
 
+  // Find low output alerts
   def detectLowOutput(records: Seq[Record], threshold: Double): Seq[LowOutputAlert] = {
     records.filter(_.outputKWh < threshold).map(r => LowOutputAlert(r, threshold))
   }
 
+  // Show low output
   def showLowOutputAlerts(records: Seq[Record], threshold: Double): Unit = {
     val alerts = detectLowOutput(records, threshold)
     if (alerts.isEmpty) {
@@ -78,8 +86,10 @@ object Monitor {
     }
   }
 
+  // Find sudden drops
   def detectSuddenDrops(records: Seq[Record], dropThresholdPercent: Double): Seq[SuddenDropAlert] = {
     val sorted = records.sortBy(_.timestamp.toEpochSecond)
+    // Compare each pair for percentage drop
     sorted.sliding(2).collect {
       case Seq(prev, current) if prev.outputKWh > 0 =>
         val drop = ((prev.outputKWh - current.outputKWh) / prev.outputKWh) * 100
@@ -89,6 +99,7 @@ object Monitor {
     }.flatten.toSeq
   }
 
+  // Show drop alerts
   def showSuddenDropAlerts(records: Seq[Record], dropThresholdPercent: Double): Unit = {
     val alerts = detectSuddenDrops(records, dropThresholdPercent)
     if (alerts.isEmpty) {

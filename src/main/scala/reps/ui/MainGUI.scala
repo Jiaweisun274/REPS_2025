@@ -1,3 +1,4 @@
+// GUI application for downloading, viewing, analyzing, and monitoring energy data
 package reps.ui
 
 import scalafx.application.JFXApp3
@@ -25,22 +26,26 @@ object MainGUI extends JFXApp3 {
   private val dataDir = Paths.get("data")
   Files.createDirectories(dataDir)
 
-  private var lastDateTag: String = ""
-  private var fromDate: ZonedDateTime = _
-  private var toDate: ZonedDateTime = _
-  private val dateFmt = DateTimeFormatter.ISO_DATE
-
   override def start(): Unit = {
     stage = new JFXApp3.PrimaryStage {
       title = "REP GUI"
       scene = new Scene(700, 600) {
 
+        // Input field for API key
+        val apiKeyField = new TextField {
+          promptText = "Enter your API Key"
+        }
+
+        private def getApiKey: String = apiKeyField.text.value.trim
+
         val infoLabel = new Label("Choose an action:")
 
+        // Input for single date download
         val dateInput = new TextField {
           promptText = "Enter date (YYYY-MM-DD)"
         }
 
+        // Input for custom date range
         val rangeStart = new TextField {
           promptText = "Start date (YYYY-MM-DD)"
         }
@@ -49,6 +54,7 @@ object MainGUI extends JFXApp3 {
           promptText = "End date (YYYY-MM-DD)"
         }
 
+        // Dropdown for predefined date ranges
         val predefinedBox = new ComboBox(Seq(
           "Last 24 hours",
           "Last 7 days",
@@ -58,12 +64,13 @@ object MainGUI extends JFXApp3 {
           promptText = "Select predefined range"
         }
 
+        // Output text area to show logs or analysis results
         val outputArea = new TextArea {
           editable = false
           prefRowCount = 20
         }
 
-        // Chart placeholder and data model for chart
+        // Configure X axis
         val chartXAxis = new CategoryAxis() {
           tickLabelRotation = -45
           tickLabelGap = 5
@@ -72,17 +79,19 @@ object MainGUI extends JFXApp3 {
         val chartYAxis = new NumberAxis() { label = "kWh Output" }
         val chartSeries = new XYChart.Series[String, Number]()
         val lineChart = new LineChart[String, Number](chartXAxis, chartYAxis) {
-          title = "Energy Output Over Time"
+          title = "Energy Output"
           data() += chartSeries
           prefHeight = 300
         }
 
+        // Store range
         def setDateRange(tag: String, from: ZonedDateTime, to: ZonedDateTime): Unit = {
           lastDateTag = tag
           fromDate = from
           toDate = to
         }
 
+        // Parse date
         val downloadBtn = new Button("Download") {
           onAction = _ => {
             try {
@@ -91,6 +100,8 @@ object MainGUI extends JFXApp3 {
               val to = from.plusDays(1)
               val tag = d.toString
               val sources = Seq((267,"solar"), (181,"wind"), (191,"hydro"), (124,"consumption"))
+              // Download sources
+              Downloader.setApiKey(getApiKey)
               sources.foreach { case (id, label) =>
                 Downloader.downloadForDate(id, label, from, to, tag, dataDir.toString)
               }
@@ -102,6 +113,7 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // Parse range
         val downloadRangeBtn = new Button("Download Range") {
           onAction = _ => {
             try {
@@ -111,6 +123,8 @@ object MainGUI extends JFXApp3 {
               val to = e.plusDays(1).atStartOfDay(ZoneOffset.UTC)
               val tag = s"${s}_to_${e}"
               val sources = Seq((267,"solar"), (181,"wind"), (191,"hydro"), (124,"consumption"))
+              // Download sources
+              Downloader.setApiKey(getApiKey)
               sources.foreach { case (id, label) =>
                 Downloader.downloadForDate(id, label, from, to, tag, dataDir.toString)
               }
@@ -122,6 +136,7 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // Handle predefined
         val downloadPredefinedBtn = new Button("Download Predefined") {
           onAction = _ => {
             val now = ZonedDateTime.now(ZoneOffset.UTC)
@@ -136,6 +151,8 @@ object MainGUI extends JFXApp3 {
             }
 
             val sources = Seq((267,"solar"), (181,"wind"), (191,"hydro"), (124,"consumption"))
+            // Download sources
+            Downloader.setApiKey(getApiKey)
             sources.foreach { case (id, label) =>
               Downloader.downloadForDate(id, label, from, to, tag, dataDir.toString)
             }
@@ -144,6 +161,7 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // UI controls for viewing and analyzing datasets
         val datasetBox = new ComboBox(Seq("solar", "wind", "hydro", "consumption")) {
           promptText = "Select dataset to view"
         }
@@ -169,6 +187,7 @@ object MainGUI extends JFXApp3 {
           promptText = "Search keyword (optional)"
         }
 
+        // View filtered and sorted data
         val viewDataBtn = new Button("View Data") {
           onAction = _ => {
             val selected = datasetBox.value.value
@@ -179,7 +198,9 @@ object MainGUI extends JFXApp3 {
               if (recs.isEmpty) {
                 outputArea.text = s"### $selected: no records"
               } else {
+                // Group records
                 val grouped = DataAnalyzer.groupByGranularity(recs, granularity)
+                // Sort records
                 val sortedGrouped = sortBox.value.value match {
                   case "Timestamp Ascending"  => grouped.toSeq.sortBy(_._1)
                   case "Timestamp Descending" => grouped.toSeq.sortBy(_._1)(Ordering[String].reverse)
@@ -188,6 +209,7 @@ object MainGUI extends JFXApp3 {
                   case _                      => grouped.toSeq
                 }
 
+                // Filter lines
                 val searchKeyword = searchField.text.value.trim.toLowerCase
                 val lines = sortedGrouped.map {
                   case (key, list) =>
@@ -210,6 +232,7 @@ object MainGUI extends JFXApp3 {
                   case _          => DateTimeFormatter.ISO_LOCAL_DATE_TIME
                 }
 
+                // Limit chart
                 val chartData = sortedGrouped.zipWithIndex.map {
                   case ((_, list), idx) =>
                     val label = s"${idx + 1}"
@@ -222,7 +245,7 @@ object MainGUI extends JFXApp3 {
 
                 chartSeries.data().clear()
                 val displayData = if (granularity == "Hourly" || granularity == "Daily") {
-                  chartData.sortBy(_._1).takeRight(50) // Show last 50 entries for clarity
+                  chartData.sortBy(_._1).takeRight(50)
                 } else chartData
 
                 chartSeries.data() ++= displayData.map { case (label, value) =>
@@ -235,6 +258,7 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // Run statistical analysis
         val analyzeBtn = new Button("Analyze") {
           onAction = _ => {
             val selected = analyzeBox.value.value
@@ -245,6 +269,7 @@ object MainGUI extends JFXApp3 {
               else
                 CsvStorage.readRecords(dataDir.resolve(s"$selected-$lastDateTag.csv").toString)
 
+              // Compute stats
               val groupedTotals = DataAnalyzer.groupByGranularity(raw, granularity).mapValues(_.map(_.outputKWh).sum).values.toSeq
               if (groupedTotals.nonEmpty) {
                 val mean = DataAnalyzer.mean(groupedTotals)
@@ -262,6 +287,7 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // Monitor input fields and button for threshold alerts
         val lowThresholdField = new TextField {
           promptText = "Low output threshold"
         }
@@ -270,6 +296,7 @@ object MainGUI extends JFXApp3 {
           promptText = "Drop % threshold"
         }
 
+        // Detect alerts
         val monitorBtn = new Button("Monitor") {
           onAction = _ => {
             if (lastDateTag.nonEmpty) {
@@ -277,6 +304,7 @@ object MainGUI extends JFXApp3 {
                 CsvStorage.readRecords(dataDir.resolve(s"$label-$lastDateTag.csv").toString)
               }
 
+              // Use defaults
               val lowThresh = Try(lowThresholdField.text.value.trim.toDouble).getOrElse(10.0)
               println(s"Low Threshold Used: $lowThresh")
               val dropThresh = Try(dropThresholdField.text.value.trim.toDouble).getOrElse(50.0)
@@ -307,8 +335,10 @@ object MainGUI extends JFXApp3 {
           }
         }
 
+        // Build layout
         root = new VBox(10) {
           children = Seq(
+            new HBox(10, new Label("Fingrid API Key:"), apiKeyField),
             new HBox(10, new Label("Single date:"), dateInput, downloadBtn),
             new HBox(10, new Label("Date range:"), rangeStart, rangeEnd, downloadRangeBtn),
             new HBox(10, new Label("Predefined range:"), predefinedBox, downloadPredefinedBtn),
@@ -321,4 +351,9 @@ object MainGUI extends JFXApp3 {
       }
     }
   }
+
+  private var lastDateTag: String = ""
+  private var fromDate: ZonedDateTime = _
+  private var toDate: ZonedDateTime = _
+  private val dateFmt = DateTimeFormatter.ISO_DATE
 }
