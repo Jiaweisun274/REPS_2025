@@ -314,7 +314,7 @@ object MainGUI extends JFXApp3 {
 
               val output = new StringBuilder
               if (lowAlerts.nonEmpty) {
-                output.append("⚠️ Low Output Alerts:\n")
+                output.append("Low Output Alerts:\n")
                 output.append(lowAlerts.map(a => f"${a.record.timestamp} | ${a.record.source.id} | ${a.record.outputKWh}%.2f kWh (threshold ${a.threshold})").mkString("\n"))
                 output.append("\n\n")
               } else {
@@ -322,7 +322,7 @@ object MainGUI extends JFXApp3 {
               }
 
               if (dropAlerts.nonEmpty) {
-                output.append("⚠️ Sudden Drop Alerts:\n")
+                output.append("Sudden Drop Alerts:\n")
                 output.append(dropAlerts.map(a => f"${a.current.timestamp} | ${a.current.source.id} | Drop: ${a.dropPercent}%%").mkString("\n"))
               }
 
