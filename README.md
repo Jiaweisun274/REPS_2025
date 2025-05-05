@@ -1,4 +1,4 @@
-# REPS_2025 – Renewable Energy Processing System
+# REPS_2025 – Renewable Energy Plant System
 
 REPS_2025 is a Scala-based software system designed to facilitate the collection, analysis, visualization, and monitoring of renewable energy and electricity consumption data. The application supports both a command-line interface (CLI) and a graphical user interface (GUI), enabling flexible user interaction for data exploration and system operation.
 ## Group members
