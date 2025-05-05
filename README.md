@@ -39,14 +39,18 @@ API keys can be obtained from the Fingrid Datahub: https://data.fingrid.fi/en/
 git clone https://github.com/Jiaweisun274/REPS_2025.git
 cd REPS_2025
 ```
-
-### Step 2: Run the CLI Application
+### Step 2: Enter sbt
 
 ```bash
-sbt run
+sbt
 ```
 
-### Step 3: Run the GUI Application
+### Step 3: Run the CLI Application
+```bash
+sbt runMain reps.ui.MenuApp
+```
+
+### Step 4: Run the GUI Application
 
 ```bash
 sbt runMain reps.ui.MainGUI
