@@ -85,7 +85,17 @@ REPS_2025/
 
 - All downloaded datasets are stored in the `data/` directory.
 - The GUI interface includes dynamic charts, tabular data browsing.
+### Functional Programming and Justified Use of Imperative Code
 
+This project follows the principles of functional programming (FP). It emphasizes immutability, pure functions, and higher-order functions. Most data processing and analysis modules avoid mutable state and imperative control structures.
+
+However, certain parts of the system use imperative constructs out of necessity:
+
+- **Graphical User Interface (GUI):** The GUI was an additional feature independently conceived and implemented beyond the original project requirements. It was added solely to enhance the usability and presentation of the system.
+
+- **File I/O Operations:** File input/output (I/O) was explicitly allowed in the project requirements to be implemented in a non-functional style. 
+
+The use of imperative code is strictly confined to the GUI and file I/O layers, while the core functionality—including analysis, transformation, and monitoring—is implemented in a functional style to satisfy the goals of the project.
 ## License
 
 This project is released under the MIT License. Copyright © 2025.

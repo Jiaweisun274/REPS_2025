@@ -23,6 +23,17 @@ object Downloader {
   }
   private val maxAtt = 5
 
+  @annotation.tailrec
+  private def readValidMode(): String = {
+    print("Choice> ")
+    val input = scala.io.StdIn.readLine().trim
+    if (Set("1", "2", "3").contains(input)) input
+    else {
+      println("[Error] Invalid input. Please enter 1, 2, or 3.")
+      readValidMode()
+    }
+  }
+
   // Ask user for time range
   def promptDownloadRange(): (ZonedDateTime, ZonedDateTime, String) = {
     println("=== REP System Data Downloader ===")
@@ -31,16 +42,7 @@ object Downloader {
     println(" 2) Custom range")
     println(" 3) Predefined intervals (last 24h,7d,30d,180d)")
 
-    val validModes = Set("1", "2", "3")
-    var mode = ""
-    var valid = false
-    while (!valid) {
-      print("Choice> ")
-      mode = scala.io.StdIn.readLine().trim
-      // Validate input
-      if (validModes.contains(mode)) valid = true
-      else println("[Error] Invalid input. Please enter 1, 2, or 3.")
-    }
+    val mode = readValidMode()
 
     val (from, to) = mode match {
       case "1" =>

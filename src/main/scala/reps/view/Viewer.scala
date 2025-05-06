@@ -8,8 +8,7 @@ object Viewer {
 
   // Menu for data type
   def viewData(dateTag: String): Unit = {
-    var viewing = true
-    while (viewing) {
+    def menuLoop(): Unit = {
       println(s"\n--- View Data for $dateTag ---")
       println(" 1) Solar")
       println(" 2) Wind")
@@ -19,19 +18,25 @@ object Viewer {
       print("Select> ")
 
       StdIn.readLine().trim match {
-        case "1" => // Solar
+        case "1" =>
           printRecords("solar", dateTag)
-        case "2" => // Wind
+          menuLoop()
+        case "2" =>
           printRecords("wind", dateTag)
-        case "3" => // Hydro
+          menuLoop()
+        case "3" =>
           printRecords("hydro", dateTag)
-        case "4" => // Consumption
+          menuLoop()
+        case "4" =>
           printRecords("consumption", dateTag)
-        case "5" => // Back
-          viewing = false
-        case _   => println("Invalid choice, try again.")
+          menuLoop()
+        case "5" => // exit
+        case _ =>
+          println("Invalid choice, try again.")
+          menuLoop()
       }
     }
+    menuLoop()
   }
 
   // Print selected data

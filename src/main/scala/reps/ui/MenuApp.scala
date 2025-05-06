@@ -34,43 +34,48 @@ object MenuApp {
     val dataDir = java.nio.file.Paths.get("data")
     java.nio.file.Files.createDirectories(dataDir)
 
-    // Main loop
-    var continueApp = true
-    while (continueApp) {
-      // Get date range
-      val (from, to, dateTag) = Downloader.promptDownloadRange()
-      // Download data
-      Seq((267, "solar"), (181, "wind"), (191, "hydro"), (124, "consumption")).foreach {
-        case (id, label) => Downloader.downloadForDate(id, label, from, to, dateTag, dataDir.toString)
-      }
-
-      // Menu loop
-      var inMenu = true
-      while (inMenu) {
-        println(
-          """
-            |--- Main Menu ---
-            |1) View data
-            |2) Analyze data
-            |3) Monitor and Alerts
-            |4) Exit
-            |5) Download new data
-            |Select> """.stripMargin)
-        StdIn.readLine().trim match {
-          case "1" => // View
-            Viewer.viewData(dateTag)
-          case "2" => // Analyze
-            DataAnalyzer.analyzeWithUserInput(dateTag, from, to)
-          case "3" => // Monitor
-            Monitor.runMonitoringMenu(dateTag)
-          case "4" => // Exit
-            inMenu = false; continueApp = false
-          case "5" => // Redownload
-            inMenu = false
-          case _   => println("Invalid choice, try again.")
-        }
-      }
-    }
+    runMainLoop(dataDir)
     println("Goodbye!")
+  }
+
+  @annotation.tailrec
+  def runMainLoop(dataDir: java.nio.file.Path): Unit = {
+    val (from, to, dateTag) = Downloader.promptDownloadRange()
+    Seq((267, "solar"), (181, "wind"), (191, "hydro"), (124, "consumption")).foreach {
+      case (id, label) => Downloader.downloadForDate(id, label, from, to, dateTag, dataDir.toString)
+    }
+
+    if (runMenu(dateTag, from, to)) runMainLoop(dataDir)
+  }
+
+  @annotation.tailrec
+  def runMenu(dateTag: String, from: ZonedDateTime, to: ZonedDateTime): Boolean = {
+    println(
+      """
+        |--- Main Menu ---
+        |1) View data
+        |2) Analyze data
+        |3) Monitor and Alerts
+        |4) Exit
+        |5) Download new data
+        |Select> """.stripMargin)
+    StdIn.readLine().trim match {
+      case "1" =>
+        Viewer.viewData(dateTag)
+        runMenu(dateTag, from, to)
+      case "2" =>
+        DataAnalyzer.analyzeWithUserInput(dateTag, from, to)
+        runMenu(dateTag, from, to)
+      case "3" =>
+        Monitor.runMonitoringMenu(dateTag)
+        runMenu(dateTag, from, to)
+      case "4" =>
+        false
+      case "5" =>
+        true
+      case _ =>
+        println("Invalid choice, try again.")
+        runMenu(dateTag, from, to)
+    }
   }
 }

@@ -63,26 +63,33 @@ object DataAnalyzer {
     }
 
     val durationDays = ChronoUnit.DAYS.between(from, to)
-    var granularity: String = ""
-    var valid = false
 
-    while (!valid) {
-      // Select granularity
+    def promptGranularity(): String = {
       println("Choose time granularity:")
       println(" 1) Hourly\n 2) Daily\n 3) Weekly\n 4) Monthly")
       print("Select> ")
       StdIn.readLine().trim match {
-        case "1" => granularity = "hourly"; valid = true
-        case "2" => granularity = "daily"; valid = true
+        case "1" => "hourly"
+        case "2" => "daily"
         case "3" =>
-          if (durationDays >= 7) { granularity = "weekly"; valid = true }
-          else println("[Error] Weekly analysis requires at least 7 days of data.")
+          if (durationDays >= 7) "weekly"
+          else {
+            println("[Error] Weekly analysis requires at least 7 days of data.")
+            promptGranularity()
+          }
         case "4" =>
-          if (durationDays >= 30) { granularity = "monthly"; valid = true }
-          else println("[Error] Monthly analysis requires at least 30 days of data.")
-        case _ => println("Invalid input, try again.")
+          if (durationDays >= 30) "monthly"
+          else {
+            println("[Error] Monthly analysis requires at least 30 days of data.")
+            promptGranularity()
+          }
+        case _ =>
+          println("Invalid input, try again.")
+          promptGranularity()
       }
     }
+
+    val granularity = promptGranularity()
 
     val totalsPerGroup = DataAnalyzer.groupByGranularity(records, granularity)
       .mapValues(_.map(_.outputKWh).sum)
